@@ -1,0 +1,5 @@
+- id: conventional-emojis
+  name: Conventional Emojis
+  entry: conventional-emojis
+  language: python
+  stages: [commit-msg]

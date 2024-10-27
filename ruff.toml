@@ -1,0 +1,45 @@
+line-length = 88 # 88 is the default for black and ruff
+target-version = "py311"
+
+[lint]
+select = [
+    "ALL", # include all the rules, including new ones
+]
+ignore = [
+    #### modules
+    "DJ",  # django
+    "TID", # flake8-tidy-imports
+
+    #### specific rules
+    "D100",   # ignore missing docs
+    "D101",
+    "D102",
+    "D103",
+    "D104",
+    "D105",
+    "D106",
+    "D107",
+    "D200",
+    "D205",
+    "D212",
+    "D400",
+    "D401",
+    "D415",
+    "E402",   # false positives for local imports
+    "E501",   # line too long
+    "N815",   # sometimes other APIs force us to use camelCase
+    "PLW0603", # globals are useful for now
+    "TD002",
+    "TD003",
+    "TRY003", # prevents writing messages in exceptions
+    "PTH123",
+    "RET505",
+    "ANN101",
+    "ANN102", # cls does not need to be annotated
+    "ANN401", # Any for kwargs is okay
+    "FIX002",
+    "S311" # pseudo-random number generator warning
+]
+
+[lint.pydocstyle]
+convention = "google"
