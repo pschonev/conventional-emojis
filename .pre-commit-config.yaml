@@ -3,10 +3,12 @@ repos:
     # Ruff version.
     rev: v0.7.1
     hooks:
-      # Run the linter.
+      # Run the linter on push.
       - id: ruff
-      # Run the formatter.
+        stages: [pre-push]
+      # Run the formatter on push.
       - id: ruff-format
+        stages: [pre-push]
   - repo: local
     hooks:
       - id: conventional-emojis
@@ -14,4 +16,3 @@ repos:
         entry: conventional-emojis
         language: python
         stages: [commit-msg]
-  
