@@ -10,8 +10,7 @@ import yaml
 
 logger = logging.getLogger()
 logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 
@@ -66,7 +65,7 @@ def process_commit_message(
         emoji = commit_types.get(commit_type)
         if emoji:
             commit_type_end = match.end()
-            return f"{commit_message[:commit_type_end]} {emoji}{commit_message[commit_type_end:]}"
+            return f"{commit_message[:commit_type_end]} {emoji} {commit_message[commit_type_end:]}"
 
     raise NonConventionalCommitError
 
