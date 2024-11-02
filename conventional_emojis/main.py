@@ -66,7 +66,7 @@ def process_commit_message(
         emoji = commit_types.get(commit_type)
         if emoji:
             commit_type_end = match.end()
-            return f"{commit_message[:commit_type_end]} {emoji} {commit_message[commit_type_end:]}"
+            return f"{commit_message[:commit_type_end].strip()} {emoji} {commit_message[commit_type_end:].strip()}"
 
     raise NonConventionalCommitError
 
