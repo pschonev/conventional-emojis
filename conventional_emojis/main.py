@@ -39,7 +39,7 @@ COMMIT_TYPES: dict[str, str] = {
     "config": "⚙️",
 }
 
-BASE_PATTERN: str = r"^(?P<type>\w+)(\((?P<scope>.+)\))?:"
+BASE_PATTERN: str = r"^(?P<type>\w+)(\((?P<scope>.+)\))?(!)?:"
 
 
 def load_custom_rules(
