@@ -18,14 +18,15 @@ def load_custom_rules(
 ) -> tuple[dict[str, str], dict[str, str], str]:
     if not config_file.exists():
         print("No custom rules YAML file found.")
-        return COMMIT_TYPES, {}, BREAKING
+        return COMMIT_TYPES, COMMIT_TYPES, BREAKING
 
     with config_file.open("r") as file:
         config_data = yaml.safe_load(file)
 
+    # load types, scopes and breaking emoji
+    scopes = COMMIT_TYPES.copy()
+    scopes.update(config_data.get("types", {}))
     COMMIT_TYPES.update(config_data.get("types", {}))
-    scopes = config_data.get("scopes", {})
-
     breaking_emoji = config_data.get("breaking", BREAKING)
 
     return COMMIT_TYPES, scopes, breaking_emoji
