@@ -2,48 +2,15 @@
 import argparse
 import re
 import sys
-from dataclasses import dataclass
 from pathlib import Path
 
 import yaml
 
-
-@dataclass
-class NonConventionalCommitError(Exception):
-    """Raised when a commit message doesn't follow the Conventional Commits format."""
-
-    message: str = "Commit message does not follow Conventional Commits rules."
-
-    def __str__(self) -> str:
-        return self.message
-
-
-@dataclass
-class NoConventionalCommitTypeFoundError(Exception):
-    """Raised when type in the commit message is not found in the commit types."""
-
-    message: str = "Commit type not found in the commit types."
-
-    def __str__(self) -> str:
-        return self.message
-
-
-COMMIT_TYPES: dict[str, str] = {
-    "feat": "✨",
-    "fix": "🐛",
-    "docs": "📝",
-    "style": "💄",
-    "refactor": "♻️",
-    "perf": "⚡️",
-    "test": "✅",
-    "build": "🏗️",
-    "ci": "👷",
-    "config": "🔧",
-    "chore": "🧹",
-    "wip": "🚧",
-}
-BREAKING: str = "💥"
-BASE_PATTERN: str = r"^(?P<type>\w+)(\((?P<scope>.+)\))?(?P<breaking>!)?:"
+from conventional_emojis.constants import BASE_PATTERN, BREAKING, COMMIT_TYPES
+from conventional_emojis.exceptions import (
+    NoConventionalCommitTypeFoundError,
+    NonConventionalCommitError,
+)
 
 
 def load_custom_rules(
