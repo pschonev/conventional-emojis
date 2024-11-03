@@ -45,30 +45,35 @@ BASE_PATTERN: str = r"^(?P<type>\w+)(\((?P<scope>.+)\))?(!)?:"
 
 def load_custom_rules(
     config_file: Path = Path("conventional_emojis_config.yaml"),
-) -> dict[str, str]:
+) -> tuple[dict[str, str], dict[str, str]]:
     if not config_file.exists():
-        return COMMIT_TYPES
+        logger.warning("No custom rules YAML file found.")
+        return COMMIT_TYPES, {}
 
     with config_file.open("r") as file:
         config_data = yaml.safe_load(file)
 
-    COMMIT_TYPES.update(dict(config_data.get("types", {}).items()))
+    COMMIT_TYPES.update(config_data.get("types", {}))
+    scopes = config_data.get("scopes", {})
 
-    return COMMIT_TYPES
+    return COMMIT_TYPES, scopes
 
 
 def process_commit_message(
     commit_message: str,
     commit_types: dict[str, str],
+    scopes: dict[str, str],
 ) -> str:
     match = re.match(BASE_PATTERN, commit_message)
     if match:
         commit_type = match.group("type")
-        emoji = commit_types.get(commit_type)
-        if emoji:
+        scope = match.group("scope")
+        first_emoji = commit_types.get(commit_type, "")
+        second_emoji = scopes.get(scope, "") if scope else ""
+        if first_emoji:
             commit_type_end = match.end()
-            return f"{commit_message[:commit_type_end].strip()} {emoji} {commit_message[commit_type_end:].strip()}"
-
+            return f"{commit_message[:commit_type_end].strip()} {first_emoji}{second_emoji} {commit_message[commit_type_end:].strip()}"
+    # if no match
     raise NonConventionalCommitError
 
 
@@ -88,13 +93,13 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    commit_types = load_custom_rules()
+    commit_types, scopes = load_custom_rules()
 
     with args.commit_message_file.open("r") as file:
         commit_message = file.read().strip()
 
     try:
-        processed_message = process_commit_message(commit_message, commit_types)
+        processed_message = process_commit_message(commit_message, commit_types, scopes)
         if not args.emoji_disabled:
             with args.commit_message_file.open("w") as file:
                 file.write(processed_message)

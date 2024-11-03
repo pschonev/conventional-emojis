@@ -1,3 +1,7 @@
 types:
   security: "🔒"
   release: "🚀"
+
+# optional scopes
+scopes:
+  core: "🍞"
