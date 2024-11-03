@@ -52,7 +52,7 @@ def load_custom_rules(
     with config_file.open("r") as file:
         config_data = yaml.safe_load(file)
 
-    COMMIT_TYPES.update(dict(config_data.get("additional_scopes", {}).items()))
+    COMMIT_TYPES.update(dict(config_data.get("types", {}).items()))
 
     return COMMIT_TYPES
 
