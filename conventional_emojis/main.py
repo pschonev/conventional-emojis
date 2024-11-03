@@ -27,16 +27,17 @@ class NonConventionalCommitError(Exception):
 
 COMMIT_TYPES: dict[str, str] = {
     "feat": "✨",
-    "fix": "🐞",
-    "docs": "📚",
-    "style": "🎨",
-    "refactor": "🧹",
+    "fix": "🐛",
+    "docs": "📝",
+    "style": "💄",
+    "refactor": "♻️",
     "perf": "⚡️",
-    "test": "🧪",
+    "test": "✅",
     "build": "🏗️",
     "ci": "👷",
-    "chore": "🔧",
-    "config": "⚙️",
+    "config": "🔧",
+    "chore": "🧹",
+    "wip": "🚧",
 }
 
 BASE_PATTERN: str = r"^(?P<type>\w+)(\((?P<scope>.+)\))?(!)?:"
