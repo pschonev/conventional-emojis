@@ -1,8 +1,14 @@
 types:
-  security: "🔒"
+  fix: "🍕"
   release: "🚀"
+  linting: "☝️🤓"
+  logging: "📚"
+  catch: "🥅"
+  security: "🔒"
+  revert: "🤡"
 
 # optional scopes
 scopes:
-  core: "🍞"
-  logging: "📚"
+  api: "🍕"
+  ui: "🎨"
+  db: "📦"
