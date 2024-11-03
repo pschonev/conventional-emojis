@@ -38,7 +38,8 @@ ignore = [
     "ANN102", # cls does not need to be annotated
     "ANN401", # Any for kwargs is okay
     "FIX002",
-    "S311" # pseudo-random number generator warning
+    "S311", # pseudo-random number generator warning
+    "T201" # allow print statements
 ]
 
 [lint.pydocstyle]
