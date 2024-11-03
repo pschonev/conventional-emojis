@@ -52,13 +52,13 @@ def extract_commit_details(
 
 
 def set_emojis(details: CommitMessageDetails, mappings: EmojiMappings) -> str:
-    if (first_emoji := mappings.commit_types.get(details.commit_type)) is None:
+    if (type_emoji := mappings.commit_types.get(details.commit_type)) is None:
         msg = (
             f"Commit type '{details.commit_type}' does not have a corresponding emoji."
         )
         raise NoConventionalCommitTypeFoundError(msg)
-    second_emoji = mappings.scopes.get(details.scope, "") if details.scope else ""
-    return f"{mappings.breaking_emoji if details.breaking else ''}{first_emoji}{second_emoji}"
+    scope_emoji = mappings.scopes.get(details.scope, "") if details.scope else ""
+    return f"{mappings.breaking_emoji if details.breaking else ''}{type_emoji}{scope_emoji}"
 
 
 def update_commit_message(details: CommitMessageDetails, emojis: str) -> str:
