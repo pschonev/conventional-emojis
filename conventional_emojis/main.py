@@ -18,6 +18,16 @@ class NonConventionalCommitError(Exception):
         return self.message
 
 
+@dataclass
+class NoConventionalCommitTypeFoundError(Exception):
+    """Raised when type in the commit message is not found in the commit types."""
+
+    message: str = "Commit type not found in the commit types."
+
+    def __str__(self) -> str:
+        return self.message
+
+
 COMMIT_TYPES: dict[str, str] = {
     "feat": "✨",
     "fix": "🐛",
@@ -72,7 +82,10 @@ def process_commit_message(
         breaking = match.group("breaking")
 
         # set emojis
-        first_emoji = commit_types[commit_type]
+        first_emoji = commit_types.get(commit_type)
+        if first_emoji is None:
+            msg = f"Commit type '{commit_type}' does not have a corresponding emoji."
+            raise NoConventionalCommitTypeFoundError(msg)
         second_emoji = scopes.get(scope, "") if scope else ""
         emojis = f"{breaking_emoji if breaking else ''}{first_emoji}{second_emoji}"
 
@@ -113,8 +126,8 @@ def main() -> None:
             "🎉 Commit message follows Conventional Commits rules and has been updated with an emoji.",
         )
         sys.exit(0)
-    except NonConventionalCommitError as e:
-        print(f"Commit message: '{commit_message}'\n💥 {e}")
+    except (NonConventionalCommitError, NoConventionalCommitTypeFoundError) as e:
+        print(f"💥 Commit message: '{commit_message}'\n💥 {e}")
         sys.exit(1)
 
 
