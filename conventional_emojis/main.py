@@ -31,6 +31,26 @@ class EmojiMappings:
     breaking_emoji: str
 
 
+def parse_config(
+    config_data: dict,
+    *,
+    allow_types_as_scopes: bool,
+    breaking_emoji: str = BREAKING,
+    commit_types: dict[str, str] = COMMIT_TYPES,
+) -> EmojiMappings:
+    commit_types.update(config_data.get("types", {}))
+
+    scopes = config_data.get("scopes", {})
+    if allow_types_as_scopes:
+        scopes.update(commit_types)
+
+    return EmojiMappings(
+        commit_types,
+        scopes,
+        config_data.get("breaking", breaking_emoji),
+    )
+
+
 def extract_commit_details(
     commit_message: str,
     base_pattern: str = BASE_PATTERN,
@@ -78,26 +98,6 @@ def load_yaml_config(config_file: Path) -> dict:
         return {}
     with config_file.open("r") as file:
         return yaml.safe_load(file)
-
-
-def parse_config(
-    config_data: dict,
-    *,
-    allow_types_as_scopes: bool,
-    breaking_emoji: str = BREAKING,
-    commit_types: dict[str, str] = COMMIT_TYPES,
-) -> EmojiMappings:
-    scopes = config_data.get("scopes", {})
-    if allow_types_as_scopes:
-        scopes.update(commit_types)
-
-    commit_types.update(config_data.get("types", {}))
-
-    return EmojiMappings(
-        commit_types,
-        scopes,
-        config_data.get("breaking", breaking_emoji),
-    )
 
 
 def process_conventional_commit(
