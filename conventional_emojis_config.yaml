@@ -5,3 +5,4 @@ types:
 # optional scopes
 scopes:
   core: "🍞"
+  logging: "📚"
