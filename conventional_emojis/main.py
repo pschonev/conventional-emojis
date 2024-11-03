@@ -14,18 +14,21 @@ from conventional_emojis.exceptions import (
 
 
 def load_custom_rules(
+    *,
+    allow_types_as_scopes: bool,
     config_file: Path = Path("conventional_emojis_config.yaml"),
 ) -> tuple[dict[str, str], dict[str, str], str]:
     if not config_file.exists():
         print("No custom rules YAML file found.")
-        return COMMIT_TYPES, COMMIT_TYPES, BREAKING
+        return COMMIT_TYPES, (COMMIT_TYPES if allow_types_as_scopes else {}), BREAKING
 
     with config_file.open("r") as file:
         config_data = yaml.safe_load(file)
 
-    # load types, scopes and breaking emoji
-    scopes = COMMIT_TYPES.copy()
+    # load scopes
+    scopes = COMMIT_TYPES.copy() if allow_types_as_scopes else {}
     scopes.update(config_data.get("types", {}))
+    # load commit types and breaking emoji
     COMMIT_TYPES.update(config_data.get("types", {}))
     breaking_emoji = config_data.get("breaking", BREAKING)
 
@@ -74,9 +77,16 @@ def main() -> None:
         type=Path,
         help="Path to the commit message file",
     )
+    parser.add_argument(
+        "--disable-types-as-scopes",
+        action="store_true",
+        help="Disable using types as scopes in commit messages",
+    )
     args = parser.parse_args()
 
-    commit_types, scopes, breaking_emoji = load_custom_rules()
+    commit_types, scopes, breaking_emoji = load_custom_rules(
+        allow_types_as_scopes=not args.disable_types_as_scopes,
+    )
 
     with args.commit_message_file.open("r") as file:
         commit_message = file.read().strip()
