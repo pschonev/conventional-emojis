@@ -19,3 +19,13 @@ class NoConventionalCommitTypeFoundError(Exception):
 
     def __str__(self) -> str:
         return self.message
+
+
+@dataclass
+class InvalidCommitTemplateError(Exception):
+    """Raised when the commit template is invalid."""
+
+    message: str = "Invalid commit template."
+
+    def __str__(self) -> str:
+        return self.message

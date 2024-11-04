@@ -7,8 +7,14 @@ from pathlib import Path
 
 import yaml
 
-from conventional_emojis.constants import BASE_PATTERN, BREAKING, COMMIT_TYPES
+from conventional_emojis.constants import (
+    BASE_PATTERN,
+    BREAKING,
+    COMMIT_MESSAGE_TEMPLATE,
+    COMMIT_TYPES,
+)
 from conventional_emojis.exceptions import (
+    InvalidCommitTemplateError,
     NoConventionalCommitTypeFoundError,
     NonConventionalCommitError,
 )
@@ -16,18 +22,26 @@ from conventional_emojis.exceptions import (
 
 @dataclass
 class CommitMessageDetails:
-    title: str
+    conventional_prefix: str
+    description: str
     body: str
     commit_type: str
     scope: str
     breaking: bool
-    match_end: int
 
 
 @dataclass
-class EmojiMappings:
+class ConventionalEmojisConfig:
     commit_types: dict[str, str]
     scopes: dict[str, str]
+    breaking_emoji: str
+    commit_message_template: str
+
+
+@dataclass
+class Emojis:
+    type_emoji: str
+    scope_emoji: str
     breaking_emoji: str
 
 
@@ -37,17 +51,22 @@ def parse_config(
     allow_types_as_scopes: bool,
     breaking_emoji: str = BREAKING,
     commit_types: dict[str, str] = COMMIT_TYPES,
-) -> EmojiMappings:
+    commit_message_template: str = COMMIT_MESSAGE_TEMPLATE,
+) -> ConventionalEmojisConfig:
     commit_types.update(config_data.get("types", {}))
 
     scopes = config_data.get("scopes", {})
     if allow_types_as_scopes:
         scopes.update(commit_types)
 
-    return EmojiMappings(
+    return ConventionalEmojisConfig(
         commit_types,
         scopes,
         config_data.get("breaking", breaking_emoji),
+        commit_message_template=config_data.get(
+            "commit_message_template",
+            commit_message_template,
+        ),
     )
 
 
@@ -61,35 +80,66 @@ def extract_commit_details(
     if not (match := re.match(base_pattern, title)):
         raise NonConventionalCommitError
 
+    # Extract the conventional prefix and description from the title
+    conventional_prefix = title[: match.end()].strip()
+    description = title[match.end() :].strip()
+
+    # Extract the body from the rest of the lines
+    body = "\n".join(lines[1:]).strip()
+
     return CommitMessageDetails(
-        title=title,
-        body="\n".join(lines[1:]),
+        conventional_prefix=conventional_prefix,
+        description=description,
+        body=body,
         commit_type=match.group("type"),
-        scope=match.group("scope"),
+        scope=match.group("scope") if match.group("scope") else "",  # Handle None scope
         breaking=bool(match.group("breaking")),
-        match_end=match.end(),
     )
 
 
-def set_emojis(details: CommitMessageDetails, mappings: EmojiMappings) -> str:
+def get_emojis(
+    details: CommitMessageDetails,
+    mappings: ConventionalEmojisConfig,
+) -> Emojis:
     if (type_emoji := mappings.commit_types.get(details.commit_type)) is None:
         msg = (
             f"Commit type '{details.commit_type}' does not have a corresponding emoji."
         )
         raise NoConventionalCommitTypeFoundError(msg)
-    scope_emoji = mappings.scopes.get(details.scope, "") if details.scope else ""
-    return f"{mappings.breaking_emoji if details.breaking else ''}{type_emoji}{scope_emoji}"
+    return Emojis(
+        type_emoji,
+        mappings.scopes.get(details.scope, "") if details.scope else "",
+        mappings.breaking_emoji if details.breaking else "",
+    )
 
 
-def update_commit_message(details: CommitMessageDetails, emojis: str) -> str:
-    updated_title = f"{details.title[:details.match_end].strip()} {emojis} {details.title[details.match_end:].strip()}"
-    return f"{updated_title}\n{details.body}"
+def update_commit_message(
+    details: CommitMessageDetails,
+    emojis: Emojis,
+    commit_template: str,
+) -> str:
+    try:
+        return commit_template.format(
+            conventional_prefix=details.conventional_prefix,
+            description=details.description,
+            breaking_emoji=emojis.breaking_emoji,
+            type_emoji=emojis.type_emoji,
+            scope_emoji=emojis.scope_emoji,
+            body=details.body,
+        )
+    except KeyError as e:
+        msg = f"""Invalid commit template {commit_template}.
+        Not all required fields are present: conventional_prefix, description, breaking_emoji, type_emoji, scope_emoji, body."""
+        raise InvalidCommitTemplateError(msg) from e
 
 
-def process_commit_message(commit_message: str, mappings: EmojiMappings) -> str:
+def process_commit_message(
+    commit_message: str,
+    config: ConventionalEmojisConfig,
+) -> str:
     details = extract_commit_details(commit_message)
-    emojis = set_emojis(details, mappings)
-    return update_commit_message(details, emojis)
+    emojis = get_emojis(details, config)
+    return update_commit_message(details, emojis, config.commit_message_template)
 
 
 def load_yaml_config(config_file: Path) -> dict:
@@ -107,13 +157,13 @@ def process_conventional_commit(
     config_file: Path = Path("conventional_emojis_config.yaml"),
 ) -> None:
     config_data = load_yaml_config(config_file)
-    mappings = parse_config(config_data, allow_types_as_scopes=allow_types_as_scopes)
+    config = parse_config(config_data, allow_types_as_scopes=allow_types_as_scopes)
 
     with commit_message_file.open("r") as file:
         commit_message = file.read().strip()
 
     try:
-        processed_message = process_commit_message(commit_message, mappings)
+        processed_message = process_commit_message(commit_message, config)
         with commit_message_file.open("w") as file:
             file.write(processed_message)
         print(
