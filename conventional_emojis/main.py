@@ -106,9 +106,17 @@ def get_emojis(
             f"Commit type '{details.commit_type}' does not have a corresponding emoji."
         )
         raise NoConventionalCommitTypeFoundError(msg)
+
+    scope_emoji = ""
+    if details.scope:
+        for pattern, emoji in mappings.scopes.items():
+            if re.fullmatch(pattern, details.scope.strip()):
+                scope_emoji = emoji
+                break
+
     return Emojis(
         type_emoji,
-        mappings.scopes.get(details.scope, "") if details.scope else "",
+        scope_emoji,
         mappings.breaking_emoji if details.breaking else "",
     )
 
