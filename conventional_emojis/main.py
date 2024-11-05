@@ -34,6 +34,7 @@ class CommitMessageDetails:
 class ConventionalEmojisConfig:
     commit_types: dict[str, str]
     scopes: dict[str, str]
+    combos: dict[str, dict[str, str]]
     breaking_emoji: str
     commit_message_template: str
 
@@ -60,9 +61,10 @@ def parse_config(
         scopes.update(commit_types)
 
     return ConventionalEmojisConfig(
-        commit_types,
-        scopes,
-        config_data.get("breaking", breaking_emoji),
+        commit_types=commit_types,
+        scopes=scopes,
+        combos=config_data.get("combos", {}),
+        breaking_emoji=config_data.get("breaking", breaking_emoji),
         commit_message_template=config_data.get(
             "commit_message_template",
             commit_message_template,
@@ -101,6 +103,23 @@ def get_emojis(
     details: CommitMessageDetails,
     mappings: ConventionalEmojisConfig,
 ) -> Emojis:
+    # First check for combos
+    if (
+        mappings.combos
+        and details.scope
+        and (combo_patterns := mappings.combos.get(details.commit_type)) is not None
+    ):
+        for pattern, emoji in combo_patterns.items():
+            if re.fullmatch(pattern, details.scope.strip()):
+                # If we find a matching combo, use its emoji as the type_emoji
+                # and set scope_emoji to empty string
+                return Emojis(
+                    type_emoji=emoji,
+                    scope_emoji="",
+                    breaking_emoji=mappings.breaking_emoji if details.breaking else "",
+                )
+
+    # If no combo matches, proceed with regular type and scope emoji logic
     if (type_emoji := mappings.commit_types.get(details.commit_type)) is None:
         msg = (
             f"Commit type '{details.commit_type}' does not have a corresponding emoji."
@@ -115,9 +134,9 @@ def get_emojis(
                 break
 
     return Emojis(
-        type_emoji,
-        scope_emoji,
-        mappings.breaking_emoji if details.breaking else "",
+        type_emoji=type_emoji,
+        scope_emoji=scope_emoji,
+        breaking_emoji=mappings.breaking_emoji if details.breaking else "",
     )
 
 

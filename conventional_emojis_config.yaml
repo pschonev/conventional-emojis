@@ -2,14 +2,17 @@ types:
   fix: "🍕"
   release: "🚀"
   logging: "📚"
-  catch: "🥅"
-  security: "🔒"
   revert: "🤡"
 
 # scope keys can be regex patterns
 scopes:
   app|application|api|core|code: "🐍"
-  lint.*: "☝️🤓"  # matches lint, linting, linter, etc.
-  ui: "🎨"
+  ui|frontend: "🎨"
   db: "📦"
-  
+
+combos:
+  chore:
+    lint.*: "☝️🤓"  # matches lint, linting, linter, etc.
+    catch: "🥅"
+  feat:
+    code: "🎉"
