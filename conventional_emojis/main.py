@@ -7,6 +7,8 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+import msgspec
+
 from conventional_emojis.constants import (
     BASE_PATTERN,
     BREAKING,
@@ -31,13 +33,49 @@ class CommitMessageDetails:
     breaking: bool
 
 
-@dataclass
-class ConventionalEmojisConfig:
-    commit_types: dict[str, str]
-    scopes: dict[str, str]
-    combos: dict[str, dict[str, str]]
-    breaking_emoji: str
-    commit_message_template: str
+class ConventionalEmojisConfig(msgspec.Struct, forbid_unknown_fields=True):
+    types: dict[str, str] = msgspec.field(
+        default_factory=lambda: dict(COMMIT_TYPES),
+    )
+    scopes: dict[str, str] | None = None
+    combos: dict[str, dict[str, str]] | None = None
+    breaking_emoji: str = BREAKING
+    commit_message_template: str = COMMIT_MESSAGE_TEMPLATE
+
+    @classmethod
+    def from_toml(
+        cls,
+        config_file: Path,
+        *,
+        allow_types_as_scopes: bool = True,
+        template_override: str | None = None,
+        default_commit_types: dict[str, str] = COMMIT_TYPES,
+    ) -> "ConventionalEmojisConfig":
+        """Load configuration from TOML file with proper defaults and overrides."""
+        if config_file.exists():
+            with config_file.open("rb") as f:
+                try:
+                    instance = msgspec.toml.decode(f.read(), type=cls)
+                except msgspec.ValidationError as e:
+                    msg = f"Error parsing custom rules TOML file: {e}"
+                    raise msgspec.ValidationError(msg) from None
+                # Create a new dict with defaults and update with config types
+                types = dict(default_commit_types)
+                types.update(instance.types)
+                instance.types = types
+        else:
+            print("No custom rules TOML file found.")
+            instance = cls(types=default_commit_types)
+
+        # Apply template override if provided
+        if template_override is not None:
+            instance.commit_message_template = template_override
+
+        # Update scopes with types if allowed
+        if instance.scopes is not None and allow_types_as_scopes:
+            instance.scopes.update(instance.types)
+
+        return instance
 
 
 @dataclass
@@ -62,7 +100,7 @@ def parse_config(
         scopes.update(commit_types)
 
     return ConventionalEmojisConfig(
-        commit_types=commit_types,
+        types=commit_types,
         scopes=scopes,
         combos=config_data.get("combos", {}),
         breaking_emoji=config_data.get("breaking", breaking_emoji),
@@ -126,15 +164,15 @@ def get_emojis(
                 )
 
     # If no combo matches, proceed with regular type and scope emoji logic
-    if (type_emoji := mappings.commit_types.get(details.commit_type)) is None:
+    if (type_emoji := mappings.types.get(details.commit_type)) is None:
         msg = (
             f"Commit type '{details.commit_type}' does not have a corresponding emoji.\n"
-            f"Available types are: {', '.join(sorted(mappings.commit_types.keys()))}"
+            f"Available types are: {', '.join(sorted(mappings.types.keys()))}"
         )
         raise NoConventionalCommitTypeFoundError(msg)
 
     scope_emoji = ""
-    if details.scope:
+    if details.scope and mappings.scopes is not None:
         for pattern, emoji in mappings.scopes.items():
             if re.fullmatch(pattern, details.scope.strip()):
                 scope_emoji = emoji
@@ -207,15 +245,10 @@ def process_conventional_commit(
     enforce_scope_patterns: bool = False,
     disable_breaking_emoji: bool = False,
 ) -> None:
-    config_data = load_toml_config(config_file)
-
-    # Override template if provided via command line
-    if template is not None:
-        config_data["commit_message_template"] = template
-
-    config = parse_config(
-        config_data,
+    config = ConventionalEmojisConfig.from_toml(
+        config_file=config_file,
         allow_types_as_scopes=allow_types_as_scopes,
+        template_override=template,
     )
 
     with commit_message_file.open("r") as file:
