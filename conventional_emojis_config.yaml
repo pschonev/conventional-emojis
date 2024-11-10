@@ -13,6 +13,6 @@ scopes:
 combos:
   chore:
     lint.*: "☝️🤓"  # matches lint, linting, linter, etc.
-    catch: "🥅"
+    catch|except.*|error: "🥅"
   feat:
     code: "🎉"

@@ -129,7 +129,8 @@ def get_emojis(
     # If no combo matches, proceed with regular type and scope emoji logic
     if (type_emoji := mappings.commit_types.get(details.commit_type)) is None:
         msg = (
-            f"Commit type '{details.commit_type}' does not have a corresponding emoji."
+            f"Commit type '{details.commit_type}' does not have a corresponding emoji.\n"
+            f"Available types are: {', '.join(sorted(mappings.commit_types.keys()))}"
         )
         raise NoConventionalCommitTypeFoundError(msg)
 
