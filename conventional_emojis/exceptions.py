@@ -29,3 +29,13 @@ class InvalidCommitTemplateError(Exception):
 
     def __str__(self) -> str:
         return self.message
+
+
+@dataclass
+class UndefinedScopeError(Exception):
+    """Raised when a scope doesn't match any defined patterns when enforcement is enabled."""
+
+    message: str = "Scope does not match any defined patterns in the configuration."
+
+    def __str__(self) -> str:
+        return self.message

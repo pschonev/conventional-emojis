@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import argparse
 import re
 import sys
@@ -17,6 +18,7 @@ from conventional_emojis.exceptions import (
     InvalidCommitTemplateError,
     NoConventionalCommitTypeFoundError,
     NonConventionalCommitError,
+    UndefinedScopeError,
 )
 
 
@@ -102,6 +104,9 @@ def extract_commit_details(
 def get_emojis(
     details: CommitMessageDetails,
     mappings: ConventionalEmojisConfig,
+    *,
+    enforce_scope_patterns: bool = False,
+    disable_breaking_emoji: bool = False,
 ) -> Emojis:
     # First check for combos
     if (
@@ -116,7 +121,9 @@ def get_emojis(
                 return Emojis(
                     type_emoji=emoji,
                     scope_emoji="",
-                    breaking_emoji=mappings.breaking_emoji if details.breaking else "",
+                    breaking_emoji=mappings.breaking_emoji
+                    if details.breaking and not disable_breaking_emoji
+                    else "",
                 )
 
     # If no combo matches, proceed with regular type and scope emoji logic
@@ -132,11 +139,17 @@ def get_emojis(
             if re.fullmatch(pattern, details.scope.strip()):
                 scope_emoji = emoji
                 break
+        else:  # no break - no matching pattern found
+            if enforce_scope_patterns:
+                msg = f"Scope '{details.scope}' does not match any defined patterns in the configuration."
+                raise UndefinedScopeError(msg)
 
     return Emojis(
         type_emoji=type_emoji,
         scope_emoji=scope_emoji,
-        breaking_emoji=mappings.breaking_emoji if details.breaking else "",
+        breaking_emoji=mappings.breaking_emoji
+        if details.breaking and not disable_breaking_emoji
+        else "",
     )
 
 
@@ -163,9 +176,17 @@ def update_commit_message(
 def process_commit_message(
     commit_message: str,
     config: ConventionalEmojisConfig,
+    *,
+    enforce_scope_patterns: bool = False,
+    disable_breaking_emoji: bool = False,
 ) -> str:
     details = extract_commit_details(commit_message)
-    emojis = get_emojis(details, config)
+    emojis = get_emojis(
+        details,
+        config,
+        enforce_scope_patterns=enforce_scope_patterns,
+        disable_breaking_emoji=disable_breaking_emoji,
+    )
     return update_commit_message(details, emojis, config.commit_message_template)
 
 
@@ -182,22 +203,42 @@ def process_conventional_commit(
     *,
     allow_types_as_scopes: bool,
     config_file: Path = Path("conventional_emojis_config.yaml"),
+    template: str | None = None,
+    enforce_scope_patterns: bool = False,
+    disable_breaking_emoji: bool = False,
 ) -> None:
     config_data = load_yaml_config(config_file)
-    config = parse_config(config_data, allow_types_as_scopes=allow_types_as_scopes)
+
+    # Override template if provided via command line
+    if template is not None:
+        config_data["commit_message_template"] = template
+
+    config = parse_config(
+        config_data,
+        allow_types_as_scopes=allow_types_as_scopes,
+    )
 
     with commit_message_file.open("r") as file:
         commit_message = file.read().strip()
 
     try:
-        processed_message = process_commit_message(commit_message, config)
+        processed_message = process_commit_message(
+            commit_message,
+            config,
+            enforce_scope_patterns=enforce_scope_patterns,
+            disable_breaking_emoji=disable_breaking_emoji,
+        )
         with commit_message_file.open("w") as file:
             file.write(processed_message)
         print(
             "🎉 Commit message follows Conventional Commits rules and has been updated with an emoji.",
         )
         sys.exit(0)
-    except (NonConventionalCommitError, NoConventionalCommitTypeFoundError) as e:
+    except (
+        NonConventionalCommitError,
+        NoConventionalCommitTypeFoundError,
+        UndefinedScopeError,
+    ) as e:
         print(f"💥 Commit message: '{commit_message}'\n💥 {e}")
         sys.exit(1)
 
@@ -222,12 +263,30 @@ def main() -> None:
         action="store_true",
         help="Disable using types as scopes in commit messages",
     )
+    parser.add_argument(
+        "--template",
+        type=str,
+        help="Override commit message template (overrides both default and config file settings)",
+    )
+    parser.add_argument(
+        "--disable-breaking-emoji",
+        action="store_true",
+        help="Disable showing breaking change emoji",
+    )
+    parser.add_argument(
+        "--enforce-scope-patterns",
+        action="store_true",
+        help="Enforce scope to match defined patterns in settings",
+    )
     args = parser.parse_args()
 
     process_conventional_commit(
         commit_message_file=args.commit_message_file,
         allow_types_as_scopes=not args.disable_types_as_scopes,
         config_file=args.config_file,
+        template=args.template,
+        enforce_scope_patterns=args.enforce_scope_patterns,
+        disable_breaking_emoji=args.disable_breaking_emoji,
     )
 
 
