@@ -3,7 +3,6 @@
 import argparse
 import re
 import sys
-import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -83,32 +82,6 @@ class Emojis:
     type_emoji: str
     scope_emoji: str
     breaking_emoji: str
-
-
-def parse_config(
-    config_data: dict,
-    *,
-    allow_types_as_scopes: bool,
-    breaking_emoji: str = BREAKING,
-    commit_types: dict[str, str] = COMMIT_TYPES,
-    commit_message_template: str = COMMIT_MESSAGE_TEMPLATE,
-) -> ConventionalEmojisConfig:
-    commit_types.update(config_data.get("types", {}))
-
-    scopes = config_data.get("scopes", {})
-    if allow_types_as_scopes:
-        scopes.update(commit_types)
-
-    return ConventionalEmojisConfig(
-        types=commit_types,
-        scopes=scopes,
-        combos=config_data.get("combos", {}),
-        breaking_emoji=config_data.get("breaking", breaking_emoji),
-        commit_message_template=config_data.get(
-            "commit_message_template",
-            commit_message_template,
-        ),
-    )
 
 
 def extract_commit_details(
@@ -226,14 +199,6 @@ def process_commit_message(
         disable_breaking_emoji=disable_breaking_emoji,
     )
     return update_commit_message(details, emojis, config.commit_message_template)
-
-
-def load_toml_config(config_file: Path) -> dict:
-    if not config_file.exists():
-        print("No custom rules TOML file found.")
-        return {}
-    with config_file.open("rb") as file:
-        return tomllib.load(file)
 
 
 def process_conventional_commit(
