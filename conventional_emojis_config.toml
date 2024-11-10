@@ -3,6 +3,7 @@ fix = "🍕"
 release = "🚀"
 logging = "📚"
 revert = "🤡"
+test = "🧪"
 
 [scopes]
 "app|application|api|core|code" = "🐍"

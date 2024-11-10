@@ -42,5 +42,11 @@ ignore = [
     "T201" # allow print statements
 ]
 
+exclude = [
+    "tests/"
+]
+
 [lint.pydocstyle]
 convention = "google"
+
+
