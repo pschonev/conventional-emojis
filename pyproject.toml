@@ -4,9 +4,7 @@ version = "0.1.0"
 description = "pre-commit hook to check if a commit message is conventional and adds emojis"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = [
-    "pyyaml>=6.0.2",
-]
+dependencies = []
 
 [project.scripts]
 conventional-emojis = "conventional_emojis.main:main"

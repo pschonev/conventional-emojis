@@ -1,0 +1,17 @@
+[types]
+fix = "🍕"
+release = "🚀"
+logging = "📚"
+revert = "🤡"
+
+[scopes]
+"app|application|api|core|code" = "🐍"
+"ui|frontend" = "🎨"
+db = "📦"
+
+[combos.chore]
+"lint.*" = "☝️🤓" 
+"catch|except.*|error" = "🥅"
+
+[combos.feat]
+code = "🎉"

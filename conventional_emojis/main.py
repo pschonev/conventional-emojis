@@ -3,10 +3,9 @@
 import argparse
 import re
 import sys
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
-
-import yaml
 
 from conventional_emojis.constants import (
     BASE_PATTERN,
@@ -191,12 +190,12 @@ def process_commit_message(
     return update_commit_message(details, emojis, config.commit_message_template)
 
 
-def load_yaml_config(config_file: Path) -> dict:
+def load_toml_config(config_file: Path) -> dict:
     if not config_file.exists():
-        print("No custom rules YAML file found.")
+        print("No custom rules TOML file found.")
         return {}
-    with config_file.open("r") as file:
-        return yaml.safe_load(file)
+    with config_file.open("rb") as file:
+        return tomllib.load(file)
 
 
 def process_conventional_commit(
@@ -208,7 +207,7 @@ def process_conventional_commit(
     enforce_scope_patterns: bool = False,
     disable_breaking_emoji: bool = False,
 ) -> None:
-    config_data = load_yaml_config(config_file)
+    config_data = load_toml_config(config_file)
 
     # Override template if provided via command line
     if template is not None:
@@ -256,7 +255,7 @@ def main() -> None:
     parser.add_argument(
         "--config-file",
         type=Path,
-        default=Path("conventional_emojis_config.yaml"),
+        default=Path("conventional_emojis_config.toml"),
         help="Path to the configuration file",
     )
     parser.add_argument(
