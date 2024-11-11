@@ -1,6 +1,6 @@
 [project]
 name = "conventional-emojis"
-version = "0.1.0"
+version = "1.0.0"
 description = "pre-commit hook to check if a commit message is conventional and adds emojis"
 readme = "README.md"
 requires-python = ">=3.11"
