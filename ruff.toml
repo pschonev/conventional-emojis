@@ -42,9 +42,15 @@ ignore = [
     "T201" # allow print statements
 ]
 
-exclude = [
-    "tests/"
-]
+[lint.pylint]
+max-args = 7
+
+[lint.extend-per-file-ignores]
+"tests/**/*.py" = [
+                  'S101', # Allow asserts in test files
+                  'ANN',
+                  'FBT001'
+                  ]
 
 [lint.pydocstyle]
 convention = "google"
