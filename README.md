@@ -37,19 +37,19 @@ feat(parser): ✨ add ability to parse arrays
 
 1. Install the package:
 
-```bash
-pip install conventional-commit-emojis
-```
+    ```bash
+    pip install conventional-commit-emojis
+    ```
 
 2. Add to your `.pre-commit-config.yaml`:
 
-```yaml
-repos:
-  - repo: https://github.com/pschonev/conventional-commit-emojis
-    rev: v1.0.0
-    hooks:
-      - id: conventional-commit-emojis
-```
+    ```yaml
+    repos:
+      - repo: https://github.com/pschonev/conventional-commit-emojis
+        rev: v1.0.0
+        hooks:
+          - id: conventional-commit-emojis
+    ```
 
 ## Configuration
 
