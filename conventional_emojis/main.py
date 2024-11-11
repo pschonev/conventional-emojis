@@ -32,43 +32,69 @@ class CommitMessageDetails:
     breaking: bool
 
 
+@dataclass
+class Emojis:
+    type_emoji: str
+    scope_emoji: str
+    breaking_emoji: str
+
+
+class Config(msgspec.Struct, forbid_unknown_fields=True):
+    breaking_emoji: str = BREAKING
+    commit_message_template: str = COMMIT_MESSAGE_TEMPLATE
+
+
 class ConventionalEmojisConfig(msgspec.Struct, forbid_unknown_fields=True):
     types: dict[str, str] = msgspec.field(
         default_factory=lambda: dict(COMMIT_TYPES),
     )
     scopes: dict[str, str] | None = None
     combos: dict[str, dict[str, str]] | None = None
-    breaking_emoji: str = BREAKING
-    commit_message_template: str = COMMIT_MESSAGE_TEMPLATE
+    config: Config = msgspec.field(default_factory=Config)
 
     @classmethod
     def from_toml(
         cls,
-        config_file: Path,
+        toml_content: str | bytes,
         *,
         allow_types_as_scopes: bool = True,
         template_override: str | None = None,
         default_commit_types: dict[str, str] = COMMIT_TYPES,
     ) -> "ConventionalEmojisConfig":
-        """Load configuration from TOML file with proper defaults and overrides."""
-        if config_file.exists():
-            with config_file.open("rb") as f:
-                try:
-                    instance = msgspec.toml.decode(f.read(), type=cls)
-                except msgspec.ValidationError as e:
-                    msg = f"Error parsing custom rules TOML file: {e}"
-                    raise msgspec.ValidationError(msg) from None
-                # Create a new dict with defaults and update with config types
-                types = dict(default_commit_types)
-                types.update(instance.types)
-                instance.types = types
-        else:
-            print("No custom rules TOML file found.")
+        """Load configuration from TOML content with proper defaults and overrides.
+
+        Args:
+            toml_content: TOML configuration content as string or bytes
+            allow_types_as_scopes: Whether to include types as valid scopes
+            template_override: Optional template to override the default
+            default_commit_types: Default commit types to use as base
+
+        Returns:
+            ConventionalEmojisConfig: Configured instance
+
+        Raises:
+            msgspec.ValidationError: If TOML content is invalid
+        """
+        # Create default instance (to be used if no TOML content is provided)
+        if not toml_content:
             instance = cls(types=default_commit_types)
+        elif toml_content:
+            try:
+                if isinstance(toml_content, bytes | bytearray):
+                    toml_content = toml_content.decode("utf-8")
+                instance = msgspec.toml.decode(toml_content, type=cls)
+            except msgspec.ValidationError as e:
+                msg = f"Error parsing custom rules TOML content: {e}"
+                raise msgspec.ValidationError(msg) from None
+
+            # Merge types from config file with default types
+            types = dict(default_commit_types)
+            types.update(instance.types)
+            instance.types = types
 
         # Apply template override if provided
         if template_override is not None:
-            instance.commit_message_template = template_override
+            instance.config.commit_message_template = template_override
 
         # Update scopes with types if allowed
         if instance.scopes is not None and allow_types_as_scopes:
@@ -77,11 +103,23 @@ class ConventionalEmojisConfig(msgspec.Struct, forbid_unknown_fields=True):
         return instance
 
 
-@dataclass
-class Emojis:
-    type_emoji: str
-    scope_emoji: str
-    breaking_emoji: str
+def load_toml_content(config_file: Path) -> str:
+    """Load TOML content from a file.
+
+    Args:
+        config_file: Path to the TOML configuration file
+
+    Returns:
+        str: Content of the TOML file if it exists, empty string if it doesn't
+
+    Note:
+        Returns empty string instead of None to maintain consistency with TOML format
+        and avoid additional None checks in the configuration parsing.
+    """
+    if config_file.exists():
+        return config_file.read_text()
+    print("No custom rules TOML file found.")
+    return ""
 
 
 def extract_commit_details(
@@ -131,7 +169,7 @@ def get_emojis(
                 return Emojis(
                     type_emoji=emoji,
                     scope_emoji="",
-                    breaking_emoji=mappings.breaking_emoji
+                    breaking_emoji=mappings.config.breaking_emoji
                     if details.breaking and not disable_breaking_emoji
                     else "",
                 )
@@ -158,7 +196,7 @@ def get_emojis(
     return Emojis(
         type_emoji=type_emoji,
         scope_emoji=scope_emoji,
-        breaking_emoji=mappings.breaking_emoji
+        breaking_emoji=mappings.config.breaking_emoji
         if details.breaking and not disable_breaking_emoji
         else "",
     )
@@ -198,7 +236,11 @@ def process_commit_message(
         enforce_scope_patterns=enforce_scope_patterns,
         disable_breaking_emoji=disable_breaking_emoji,
     )
-    return update_commit_message(details, emojis, config.commit_message_template)
+    return update_commit_message(
+        details,
+        emojis,
+        config.config.commit_message_template,
+    ).strip()
 
 
 def process_conventional_commit(
@@ -210,8 +252,9 @@ def process_conventional_commit(
     enforce_scope_patterns: bool = False,
     disable_breaking_emoji: bool = False,
 ) -> None:
+    toml_content = load_toml_content(config_file)
     config = ConventionalEmojisConfig.from_toml(
-        config_file=config_file,
+        toml_content=toml_content,
         allow_types_as_scopes=allow_types_as_scopes,
         template_override=template,
     )

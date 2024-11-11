@@ -11,7 +11,7 @@ test = "🧪"
 db = "📦"
 
 [combos.chore]
-"lint.*" = "☝️🤓" 
+"lint.*|typecheck.*" = "☝️🤓" 
 "catch|except.*|error" = "🥅"
 
 [combos.feat]
