@@ -279,8 +279,12 @@ def process_conventional_commit(
         NonConventionalCommitError,
         NoConventionalCommitTypeFoundError,
         UndefinedScopeError,
+        InvalidCommitTemplateError,
     ) as e:
         print(f"💥 Commit message: '{commit_message}'\n💥 {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
         sys.exit(1)
 
 

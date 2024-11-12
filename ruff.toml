@@ -39,7 +39,8 @@ ignore = [
     "ANN401", # Any for kwargs is okay
     "FIX002",
     "S311", # pseudo-random number generator warning
-    "T201" # allow print statements
+    "T201", # allow print statements
+    "BLE001"
 ]
 
 [lint.pylint]
