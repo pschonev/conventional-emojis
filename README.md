@@ -1,6 +1,6 @@
-# Conventional Commit Emojis 🎨
+# Conventional Emojis 🎨
 
-A pre-commit hook that enhances your conventional commits with customizable emojis based on commit type, scope, or their combinations.
+A [pre-commit](https://pre-commit.com/) hook that enhances your conventional commits with customizable emojis based on commit type, scope, or their combinations.
 
 ## Features
 
@@ -35,20 +35,26 @@ feat(parser): ✨ add ability to parse arrays
 
 ## Installation
 
-1. Install the package:
+1. Install `pre-commit` (see [pre-commit documentation](https://pre-commit.com/)):
 
     ```bash
-    pip install conventional-commit-emojis
+    pip install pre-commit
     ```
 
-2. Add to your `.pre-commit-config.yaml`:
+2. Add the following configuration to your `.pre-commit-config.yaml` file:
 
     ```yaml
     repos:
-      - repo: https://github.com/pschonev/conventional-commit-emojis
-        rev: v1.0.0
+      - repo: https://github.com/pschonev/conventional-emojis
+        rev: v0.1.0
         hooks:
-          - id: conventional-commit-emojis
+          - id: conventional-emojis
+    ```
+
+3. Install the pre-commit hooks:
+
+    ```bash
+    pre-commit install
     ```
 
 ## Configuration
