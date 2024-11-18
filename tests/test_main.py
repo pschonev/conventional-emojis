@@ -341,10 +341,10 @@ class TestFullMessageFormatting:
         assert result == "☝️🤓 chore(linting): add endpoint\n\nDetails here"
 
 
-##### Additional Tests #####
+##### Commit Message Edge Cases #####
 
 
-class TestAdditionalCases:
+class TestCommitMessageEdgeCases:
     def test_empty_commit_message(self, basic_config):
         """Test that an error is raised for an empty commit message."""
         with pytest.raises(NonConventionalCommitError):
@@ -370,6 +370,11 @@ class TestAdditionalCases:
         result = process_commit_message("feat(api):", basic_config)
         assert result == "🚀 feat(api):"
 
+
+##### Templates #####
+
+
+class TestCustomTemplates:
     def test_commit_with_custom_template(self, basic_toml: str):
         """Test that a custom commit message template is used."""
         custom_template = "{breaking_emoji} {conventional_prefix} {type_emoji}{scope_emoji} {description}\n{body}"
@@ -379,3 +384,37 @@ class TestAdditionalCases:
         )
         result = process_commit_message("feat(ui)!: add new feature", config)
         assert result == "🍌 feat(ui)!: 🔥🎨 add new feature"
+
+    def test_template_with_no_emojis(self, basic_toml: str):
+        """Test that a template with no emojis is used correctly."""
+        custom_template = "{conventional_prefix} {description}\n{body}"
+        config = ConventionalEmojisConfig.from_toml(
+            basic_toml,
+            template_override=custom_template,
+        )
+        result = process_commit_message("feat(ui): add new feature", config)
+        assert result == "feat(ui): add new feature"
+
+    def test_template_without_breaking_emoji(self, basic_toml: str):
+        """Test that a template without a breaking emoji is used correctly."""
+        custom_template = (
+            "{type_emoji}{scope_emoji} {conventional_prefix} {description}\n{body}"
+        )
+        config = ConventionalEmojisConfig.from_toml(
+            basic_toml,
+            template_override=custom_template,
+        )
+        result = process_commit_message("feat(ui)!: add new feature", config)
+        assert result == "🔥🎨 feat(ui)!: add new feature"
+
+    def test_template_with_typo(self, basic_toml: str):
+        """Test that an error is raised for an invalid template with a typo (prefix -> prefiz)."""
+        custom_template = (
+            "{type_emoji}{scope_emoji} {conventional_prefiz} {description}\n{body}"
+        )
+        config = ConventionalEmojisConfig.from_toml(
+            basic_toml,
+            template_override=custom_template,
+        )
+        with pytest.raises(InvalidCommitTemplateError):
+            process_commit_message("feat(ui): add new feature", config)

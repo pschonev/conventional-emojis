@@ -218,7 +218,8 @@ def update_commit_message(
         )
     except KeyError as e:
         msg = f"""Invalid commit template {commit_template}.
-        Not all required fields are present: conventional_prefix, description, breaking_emoji, type_emoji, scope_emoji, body."""
+        Make sure your template contains only these fields and no typos:
+        conventional_prefix, description, breaking_emoji, type_emoji, scope_emoji, body."""
         raise InvalidCommitTemplateError(msg) from e
 
 

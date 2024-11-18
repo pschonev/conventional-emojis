@@ -201,7 +201,7 @@ feat!: breaking change ----> feat!: 🎉✨ breaking change
 
 ## Template Format
 
-The commit message template **requires** the following placeholders:
+The template must **only** contain the following placeholders (all of which are optional):
 
 - `{breaking_emoji}`: Breaking change emoji
 - `{type_emoji}`: Commit type emoji
@@ -217,4 +217,4 @@ The hook will fail with helpful error messages when:
 - Commit message doesn't follow conventional commit format
 - Undefined commit type is used
 - Undefined scope is used (when `--enforce-scope-patterns` is enabled)
-- Invalid template format is provided
+- Invalid template format is provided (it contains unknown placeholders)
