@@ -82,7 +82,7 @@ BREAKING: str = "💥"
 COMMIT_MESSAGE_TEMPLATE = "{conventional_prefix} {breaking_emoji}{type_emoji}{scope_emoji} {description}\n{body}"
 ```
 
-To overwrite the default configuration, create a [`conventional_emojis_config.toml`](conventional_emojis_config.toml) file in your project root:
+To overwrite or extend the default configuration, create a [`conventional_emojis_config.toml`](conventional_emojis_config.toml) file in your project root:
 
 ```toml
 [types]
